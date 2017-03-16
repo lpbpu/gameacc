@@ -75,6 +75,10 @@ if "POST"==request_method then
             local cc_getlistversion_obj = require "cc_getlistversion"
 			local cc_getlistversion = cc_getlistversion_obj:new()
             cc_getlistversion:process(userdata)
+        elseif cmdid == 6 then
+            local cc_getgamelistport_obj = require "cc_getgamelistport"
+            local cc_getgamelistport = cc_getgamelistport_obj:new()
+            cc_getgamelistport:process(userdata)
         else
             cc_global:returnwithcode(cc_global.ERR_UNSUPPORT_CMD,nil)
         end
