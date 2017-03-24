@@ -115,17 +115,22 @@ function _M.getgameiplist(self,db)
     -- gameip(1),gamemask(2)
     
     local ipstr=""
+    local ipinfo={}
     
     for k,v in pairs(res) do
         --log(ERR,"iplist:",v[1]," ",v[2]," ",v[3])
         log(ERR,"iplist:",v[1]," ",v[2])
-    	ipstr=ipstr..v[1].."/"..tostring(v[2])..","
+    	--ipstr=ipstr..v[1].."/"..tostring(v[2])..","
+    	
+    	ipinfo[counter]=v[1].."/"..tostring(v[2])
     	
     	counter=counter+1
     	if counter>=maxreturn then
     	    break
     	end
     end
+    
+    ipstr=table.concat(ipinfo,",")
     
     gameiplist['iplist']=ipstr
 
