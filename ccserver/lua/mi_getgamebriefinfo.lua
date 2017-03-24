@@ -7,11 +7,11 @@ local MOD_ERR_BASE = mi_global.ERR_MOD_GETGAMEBRIEF_BASE
 local _M = { 
     _VERSION = '1.0.1',
     MOD_ERR_ALLOC = MOD_ERR_BASE-1,
-    MOD_ERR_DBINIT = MOD_ERR_BASE-2,
+
     MOD_ERR_GETREGION = MOD_ERR_BASE-3,
     MOD_ERR_GETBRIEFLIST = MOD_ERR_BASE-4,
     MOD_ERR_GETDETECTLIST = MOD_ERR_BASE-5,
-    MOD_ERR_DBDEINIT = MOD_ERR_BASE-6
+
 }
 
 local log = ngx.log
@@ -28,30 +28,6 @@ function _M.new(self)
 end
 
 
-function _M.init_conn(self)
-    local mysql = require "resty.mysql"
-    local db,err = mysql.new()
-    if not db then
-        mi_global:returnwithcode(self.MOD_ERR_ALLOC,nil)
-    end
-    
-    db:set_timeout(5000)
-    
-    local ok,err,errcode,sqlstate = db:connect {
-    	host = "127.0.0.1",
-    	port = 3306,
-    	database = "game",
-    	user = "root",
-    	password = "",
-    	max_packet_size= 1024*1024,
-    	compact_arrays = true }
-    
-    if not ok then
-    	mi_global:returnwithcode(self.MOD_ERR_DBINIT,nil)
-    end
-    
-    return db
-end
 
 function _M.get_all_region(self,db)
     local tmpgamelist={}
@@ -228,20 +204,15 @@ function _M.filtergamelist(self)
     return gamelist
 end
 
-function _M.deinit_conn(self,db)
-    local ok,err = db:close()
-    if not ok then
-    	mi_global:returnwithcode(self.MOD_ERR_DBDEINIT,nil)
-    end
-end
+
 
 function _M.process(self,userreq)
     self.tmpgamelist=nil
-    local db = self:init_conn()
+    local db = mi_global:init_conn()
     self.tmpgamelist = self:get_all_region(db)
     self:getbrieflist(db)
     self:getdetectlist(db)
-    self:deinit_conn(db)
+    mi_global:deinit_conn(db)
     
     local gamelist=self:filtergamelist()
     
