@@ -58,8 +58,35 @@ end
 function _M.getgameiplist(self,db)
     local sql
     local gameiplist={}
-
+    local percent=0
+    local counter
+    local maxreturn=0
+    
+    
     gameiplist['iplist']={}
+
+
+    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid
+    
+    log(ERR,sql)
+    
+    local res,err,errcode,sqlstate = db:query(sql)
+    
+    if not res then
+    	cc_global:returnwithcode(self.MOD_ERR_GETGAMELIST,nil)
+    end
+    
+    -- game_list_percent(1)
+    for k,v in pairs(res) do
+        log(ERR,"game_list_percent:",v[1])
+        percent=tonumber(v[1])
+        break
+    end
+    
+    if percent==0 then
+        return gameiplist
+    end
+    
 
     if self.regionid~= 0 then
         -- sql = "select gameip,gamemask,gameport from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " and id=" .. self.regionid .. " )"
@@ -78,6 +105,12 @@ function _M.getgameiplist(self,db)
     	cc_global:returnwithcode(self.MOD_ERR_GETGAMELIST,nil)
     end
     
+    maxreturn=table.getn(res)*percent/100
+    log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
+    
+    counter=0
+    
+    
     -- gameip(1),gamemask(2),gameport(3)
     -- gameip(1),gamemask(2)
     
@@ -87,6 +120,11 @@ function _M.getgameiplist(self,db)
         --log(ERR,"iplist:",v[1]," ",v[2]," ",v[3])
         log(ERR,"iplist:",v[1]," ",v[2])
     	ipstr=ipstr..v[1].."/"..tostring(v[2])..","
+    	
+    	counter=counter+1
+    	if counter>=maxreturn then
+    	    break
+    	end
     end
     
     gameiplist['iplist']=ipstr
