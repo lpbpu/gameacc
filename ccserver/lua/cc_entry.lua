@@ -75,6 +75,10 @@ if "POST"==request_method then
             local cc_getlistversion_obj = require "cc_getlistversion"
 			local cc_getlistversion = cc_getlistversion_obj:new()
             cc_getlistversion:process(userdata)
+		elseif cmdid == 5 then
+			local cc_getvpnlst_obj = require "cc_getvpnlist"
+			local cc_getvpnlst = cc_getvpnlst_obj.new()
+			cc_getvpnlst:process(userdata)
         elseif cmdid == 6 then
             local cc_getgamelistport_obj = require "cc_getgamelistport"
             local cc_getgamelistport = cc_getgamelistport_obj:new()
