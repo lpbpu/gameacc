@@ -30,40 +30,6 @@ function _M.new(self)
 end
 
 
-function _M.init_conn(self)
-    local mysql = require "resty.mysql"
-    local db,err = mysql.new()
-    if not db then
-        cc_global:returnwithcode(self.MOD_ERR_ALLOC,nil)
-    end
-    
-    db:set_timeout(5000)
-    
-    local ok,err,errcode,sqlstate = db:connect {
-    	host = "127.0.0.1",
-    	port = 3306,
-    	database = "game",
-    	user = "root",
-    	password = "",
-    	max_packet_size= 1024*1024,
-    	compact_arrays = true }
-    
-    if not ok then
-    	cc_global:returnwithcode(self.MOD_ERR_DBINIT,nil)
-    end
-    
-    return db
-end
-
-function _M.deinit_conn(self,db)
-    local ok,err = db:close()
-    if not ok then
-    	cc_global:returnwithcode(self.MOD_ERR_DBDEINIT,nil)
-    end
-end
-
-
-
 function _M.checkparm(self,userreq)
     local gameid,regionid
     if userreq['data']==nil then
@@ -91,9 +57,33 @@ end
 function _M.getgameiplist(self,db)
     local sql
     local gameiplist={}
+    local percent=0
+    local counter
+    local maxreturn=0
 
     gameiplist['iplist']={}
-
+    
+    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid
+    
+    log(ERR,sql)
+    
+    local res,err,errcode,sqlstate = db:query(sql)
+    
+    if not res then
+    	cc_global:returnwithcode(self.MOD_ERR_GETGAMELIST,nil)
+    end
+    
+    -- game_list_percent(1)
+    for k,v in pairs(res) do
+        log(ERR,"game_list_percent:",v[1])
+        percent=tonumber(v[1])
+        break
+    end
+    
+    if percent==0 then
+        return gameiplist
+    end
+    
     if self.regionid~= 0 then
         sql = "select gameip,gamemask,gameport from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " and id=" .. self.regionid .. " )"
         -- sql = "select distinct gameip,gamemask from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " and id=" .. self.regionid .. " )"
@@ -111,17 +101,31 @@ function _M.getgameiplist(self,db)
     	cc_global:returnwithcode(self.MOD_ERR_GETGAMELIST,nil)
     end
     
+    maxreturn=table.getn(res)*percent/100
+    log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
+    
+    counter=0
+
     -- gameip(1),gamemask(2),gameport(3)
     -- gameip(1),gamemask(2)
     
     local ipstr=""
+    local ipinfo={}
     
     for k,v in pairs(res) do
         log(ERR,"iplist:",v[1]," ",v[2]," ",v[3])
         --log(ERR,"iplist:",v[1]," ",v[2])
     	--ipstr=ipstr..v[1].."/"..tostring(v[2])..","
-    	ipstr=ipstr..v[1]..":"..tostring(v[3]).."/"..tostring(v[2])..","
+    	
+    	ipinfo[counter]=v[1]..":"..tostring(v[3]).."/"..tostring(v[2])
+    	
+    	counter=counter+1
+    	if counter>=maxreturn then
+    	    break
+    	end
     end
+    
+    ipstr=table.concat(ipinfo,",")
     
     gameiplist['iplist']=ipstr
 
@@ -153,10 +157,10 @@ function _M.process(self,userreq)
     
     
     self:checkparm(userreq)
-    local db = self:init_conn()
+    local db = cc_global:init_conn()
     local gameiplist=self:getgameiplist(db)
     self:saveuserhistory(db)
-    self:deinit_conn(db)
+    cc_global:deinit_conn(db)
     
     cc_global:returnwithcode(0,gameiplist)
 end

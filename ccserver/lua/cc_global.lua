@@ -12,11 +12,17 @@ local _M = {
     ERR_UNSUPPORT_DEVICE = ERR_BASE_ERROR-7,
     ERR_UNSUPPORT_USERTYPE = ERR_BASE_ERROR-8,
     ERR_INVALID_JSON_FORMAT = ERR_BASE_ERROR-9,
+    
+    ERR_DB_ALLOC = ERR_BASE_ERROR-10,
+    ERR_DBINIT = ERR_BASE_ERROR-11,
+    ERR_DBDEINIT = ERR_BASE_ERROR-12,
+    
 
     ERR_MOD_GETGAMELIST_BASE = ERR_BASE_ERROR-100,
     ERR_MOD_UPLOADINFO_BASE = ERR_BASE_ERROR-200,
     ERR_MOD_GETVPNIP_BASE = ERR_BASE_ERROR-300,
     ERR_MOD_GETLISTVERSION_BASE = ERR_BASE_ERROR-400,
+	ERR_MOD_GETVPNIPLIST_BASE = ERR_BASE_ERROR-500, 
     ERR_MOD_GETGAMELISTPORT_BASE = ERR_BASE_ERROR-600,
     
     
@@ -51,7 +57,38 @@ function _M.returnwithcode(self,errcode,data)
     ngx.exit(200)
 end
 
+function _M.init_conn(self)
+    local mysql = require "resty.mysql"
+    local db,err = mysql.new()
+    if not db then
+        self:returnwithcode(self.ERR_DB_ALLOC,nil)
+    end
+    
+    db:set_timeout(5000)
+    
+    local ok,err,errcode,sqlstate = db:connect {
+    	host = "127.0.0.1",
+    	port = 3306,
+    	database = "game",
+    	user = "root",
+    	password = "root",
+    	max_packet_size= 1024*1024,
+    	compact_arrays = true }
+    
+    if not ok then
+    	self:returnwithcode(self.ERR_DBINIT,nil)
+    end
+    
+    return db
+end
 
+
+function _M.deinit_conn(self,db)
+    local ok,err = db:close()
+    if not ok then
+    	self:returnwithcode(self.ERR_DBDEINIT,nil)
+    end
+end
 
 
 
