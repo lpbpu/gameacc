@@ -36,7 +36,7 @@ function _M.getvpnip(self,db)
 	local item
 
 	for k,v in pairs(self.qoslst) do
-		if tonumber(v['rtt'])<rttmin then
+		if tonumber(v['rtt'])<tonumber(rttmin) then
 			rttmin=v['rtt']	
 			id=k
 		end	
