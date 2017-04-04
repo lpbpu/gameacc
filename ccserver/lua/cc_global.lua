@@ -69,7 +69,7 @@ function _M.init_conn(self)
     local ok,err,errcode,sqlstate = db:connect {
     	host = "127.0.0.1",
     	port = 3306,
-    	database = "game",
+    	database = "game2",
     	user = "root",
     	password = "root",
     	max_packet_size= 1024*1024,

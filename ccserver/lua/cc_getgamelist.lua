@@ -89,11 +89,9 @@ function _M.getgameiplist(self,db)
     
 
     if self.regionid~= 0 then
-        -- sql = "select gameip,gamemask,gameport from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " and id=" .. self.regionid .. " )"
-        sql = "select distinct gameip,gamemask from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " and id=" .. self.regionid .. " )"
+        sql="select distinct gameip,gamemask from game_server_tbl where gameid=" .. self.gameid .. " and gameregionid=" .. self.regionid
     else
-        -- sql = "select gameip,gamemask,gameport from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " )"
-        sql = "select distinct gameip,gamemask from game_server_tbl where gameregionid in (select id from game_region_tbl where gameid=" .. self.gameid .. " )"
+        sql="select distinct gameip,gamemask from game_server_tbl where gameid=" .. self.gameid
     end
 
     log(ERR,sql)
@@ -108,24 +106,21 @@ function _M.getgameiplist(self,db)
     maxreturn=table.getn(res)*percent/100
     log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
     
-    counter=0
+    counter=1
     
     
-    -- gameip(1),gamemask(2),gameport(3)
-    -- gameip(1),gamemask(2)
+     -- gameip(1),gamemask(2)
     
     local ipstr=""
     local ipinfo={}
     
     for k,v in pairs(res) do
-        --log(ERR,"iplist:",v[1]," ",v[2]," ",v[3])
         log(ERR,"iplist:",v[1]," ",v[2])
-    	--ipstr=ipstr..v[1].."/"..tostring(v[2])..","
     	
     	ipinfo[counter]=v[1].."/"..tostring(v[2])
     	
     	counter=counter+1
-    	if counter>=maxreturn then
+    	if counter>maxreturn then
     	    break
     	end
     end
