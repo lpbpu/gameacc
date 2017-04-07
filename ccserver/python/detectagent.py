@@ -1,11 +1,12 @@
 import sys
 import getopt
-import string
-import datetime
 import os
 import subprocess
 import multiprocessing
 import time
+import urllib2
+import json
+
 from detectagent_log import *
 
 
@@ -98,7 +99,43 @@ def python_daemon():
         os._exit(1)
         
 
-def 
+def getvpnid():
+    vpnid=-1
+    
+    cmd = {
+        'cmdid':3,
+        'version':"0.1",
+        'time':int(time.time())
+    }
+    
+    headers={'Content-Type': 'application/json'}
+    
+    cmdparm={}
+    cmdparm['vpnip']="223.202.197.136"
+    
+    cmd['data']=cmdparm
+        
+    loginfo("get vpn id for ip 223.202.197.11")
+    
+    try:    
+        request=urllib2.Request(local_config['detecturl'],headers=headers,data=json.dumps(cmd))
+        response=urllib2.urlopen(request)
+        ret=response.read()
+        retval=json.loads(ret)
+        if retval['code'] != 0:
+            logerr("getvpnid return with code " + str(retval['code']))
+            return vpnid
+        
+        vpnid=retval['data']['vpnid']
+        return vpnid
+            
+    except Exception,e:
+        logerr("getvpnid excption:" + str(e))
+        return vpnid
+        
+    
+            
+    
 
 
 if __name__ == '__main__':
@@ -120,7 +157,11 @@ if __name__ == '__main__':
         if ( name == "-q" ):
             QUIET = 1
    
-    python_daemon()
+    #python_daemon()
+    
+    vpnid=getvpnid()
+    
+    print("vpnid="+str(vpnid))
     
     
     while True:
@@ -129,10 +170,6 @@ if __name__ == '__main__':
             time.sleep(1);
             sys.exit(0);
 
-	    get_fetch_record()
-	    get_local_NS()
-	    fetch_record_parallel()
-	    write_domain_file()
-        restart_named()
+	    
         
         time.sleep(local_config['sleepinterval']);                
