@@ -33,7 +33,7 @@ end
 function _M.get_all_region(self,db)
     local tmpgamelist={}
 
-    local sql_game_all_region="select game_name_tbl.game_id,game_name_tbl.game_name,game_name_tbl.game_icon_url,game_region_tbl.regionid,game_region_tbl.regionname,game_region_tbl.ispname from game_name_tbl,game_region_tbl where game_name_tbl.game_id=game_region_tbl.gameid order by game_name_tbl.game_id"
+    local sql_game_all_region="select game_name_tbl.game_id,game_name_tbl.game_name,game_name_tbl.game_icon_url,game_region_tbl.regionid,game_region_tbl.regionname,game_region_tbl.ispname from game_name_tbl,game_region_tbl where game_name_tbl.game_id=game_region_tbl.gameid and game_name_tbl.admin_enable=1 order by game_name_tbl.game_id"
     
     local res,err,errcode,sqlstate = db:query(sql_game_all_region)
     
@@ -88,7 +88,7 @@ end
 
 -- require self.tmpgamelist
 function _M.getbrieflist(self,db)
-    local sql_brief_ip = "select gameid,gameregionid,gameip,gamemask from game_server_brief_tbl order by gameid"
+    local sql_brief_ip = "select game_server_brief_tbl.gameid,game_server_brief_tbl.gameregionid,game_server_brief_tbl.gameip,game_server_brief_tbl.gamemask from game_server_brief_tbl,game_name_tbl where game_name_tbl.game_id=game_server_brief_tbl.gameid and game_name_tbl.admin_enable=1 order by game_server_brief_tbl.gameid"
     
     local res,err,errcode,sqlstate = db:query(sql_brief_ip)
     
@@ -135,7 +135,7 @@ end
 
 -- require self.tmpgamelist
 function _M.getdetectlist(self,db)
-    local sql_detect_ip = "select gameid,gameregionid,gameip,gamemask,gameport from game_server_tbl where gamedetect=1 order by gameid"
+    local sql_detect_ip = "select game_server_tbl.gameid,game_server_tbl.gameregionid,game_server_tbl.gameip,game_server_tbl.gamemask,game_server_tbl.gameport from game_server_tbl,game_name_tbl where game_name_tbl.game_id=game_server_tbl.gameid and game_name_tbl.admin_enable=1 and game_server_tbl.gamedetect=1 order by game_server_tbl.gameid"
     
     local res,err,errcode,sqlstate = db:query(sql_detect_ip)
     

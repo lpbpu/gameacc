@@ -63,7 +63,7 @@ function _M.getgameiplist(self,db)
 
     gameiplist['iplist']={}
     
-    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid
+    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid .. " and admin_enable=1"
     
     log(ERR,sql)
     
