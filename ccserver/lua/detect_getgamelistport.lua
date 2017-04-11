@@ -89,7 +89,7 @@ function _M.getdetectipportlist(self,db)
     	    regionitem=regionlst[regionid]
     	end
     	
-    	regionitem['tmpiplst'][regionitem['ipcounter']]=v[2]..":"..v[4].."/"..v[3]
+    	regionitem['tmpiplst'][regionitem['ipcounter']]=v[2].."/"..v[4].."/"..v[3]
     	regionitem['ipcounter']=regionitem['ipcounter']+1
     	
     	regionlst[regionid]=regionitem

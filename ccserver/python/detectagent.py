@@ -16,8 +16,10 @@ VERSION='0.1.0'
 local_config = {                                                                      \
                 #"detecturl":"http://games.nubesi.com/vpn/detectgame",                   \
                 "detecturl":"http://127.0.0.1/vpn/detectgame",                   \
-		        "sleepinterval":3600,                   \
-		        "concurrentnum":200,                    \
+		        "sleepinterval":30,                   \
+		        "concurrentnum":40,                    \
+		        #"reporturl":"http://223.202.197.12:8181/" \
+		        "reporturl":"http://127.0.0.1:8181/"      \
                 };
                 
 if (hasattr(os, "devnull")):
@@ -33,6 +35,8 @@ p_need_exit = 0;
 VPNID=-1    # vpnid of this node
 GAMELST={}
 
+AVA_INF=99999
+LOSS_INF=100
 
 
 def loginfo(fmt,*arg):
@@ -185,6 +189,8 @@ def getregioncfg(gameid,regionid):
     cmdparm['gameid']=gameid
     cmdparm['regionid']=regionid
     
+    cmd['data']=cmdparm
+    
     try:    
         request=urllib2.Request(local_config['detecturl'],headers=headers,data=json.dumps(cmd))
         response=urllib2.urlopen(request)
@@ -202,39 +208,205 @@ def getregioncfg(gameid,regionid):
         return []
 
 
+def filterloss(lineinfo):
+	loss=LOSS_INF
+
+	nr=lineinfo.find('% packet loss')
+	if nr>0:
+		tmpstr=lineinfo[0:nr]
+		nl=tmpstr.rfind(',')
+		if (nl>0):
+			tmpstr=lineinfo[nl+1:nr]
+			loss=int(tmpstr)
+		
+	return loss		
+	
+
+def filterava(lineinfo):
+	ava=AVA_INF
+
+	n=lineinfo.find('=')
+	if n>0:
+		tmpstr=lineinfo[n+1:]
+		tmp2=tmpstr.split('/')
+		ava1=float(tmp2[1])
+        ava=int(ava1)
+
+	return ava
+
+
+def dopingdetect(cfglst):
+    # ip/port/mask
+    ava=AVA_INF
+    loss=LOSS_INF
+    
+    cmd="ping -c 5 -W 2 " + cfglst[0]
+    print(cmd)
+    
+        
+    try:
+        sub_p = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cstdout = sub_p.stdout
+        cstderr = sub_p.stderr
+    except Exception,e:
+        print("execute ping cmd exception:" + str(e))
+        return ava,loss
+	
+    
+    try:
+        while True:
+            lineinfo = cstdout.readline()
+            if lineinfo:
+                n=lineinfo.find('% packet loss')
+                if n>0:
+                    loss=filterloss(lineinfo)
+                    continue
+                n=lineinfo.find('min/avg/max/mdev')
+                if n>0:
+                    ava=filterava(lineinfo)
+                
+                
+                if ava!=AVA_INF and loss!=LOSS_INF:
+                    break
+            else:
+                break
+        return ava,loss
+
+    except Exception,e:
+		print("read ping cmd out exception:" + str(e))
+		return ava,loss
+
+def dohpingdetect(cfglst):
+    # ip/port/mask
+    ava=AVA_INF
+    loss=LOSS_INF
+    
+    cmd="hping -c 5 -S -p " + cfglst[1] +" " + cfglst[0]
+    print(cmd)
+        
+    try:
+        sub_p = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        cstdout = sub_p.stdout
+        cstderr = sub_p.stderr
+    except Exception,e:
+        print("execute hping cmd exception:" + str(e))
+        return ava,loss
+	
+    try:
+        while True:
+            lineinfo = cstderr.readline()
+            if lineinfo:
+                n=lineinfo.find('% packet loss')
+                if n>0:
+                    loss=filterloss(lineinfo)
+                    if loss==LOSS_INF:          # if loss 100%,skip filter ava
+                        break
+                    continue
+                
+                n=lineinfo.find('min/avg/max')
+                if n>0:
+                    ava=filterava(lineinfo)
+                
+                if ava!=AVA_INF and loss!=LOSS_INF:
+                	break
+            else:
+                break
+
+        return ava,loss
+
+    except Exception,e:
+		print("read hping cmd out exception:" + str(e))
+		return ava,loss
+
+
+def dodetect(ipstr,queue):
+    tmplst=ipstr.split('/')
+    if len(tmplst)!=3:
+        print("invalid ipstr:" + ipstr)
+        ipstr=ipstr+"/"+str(AVA_INF)+"/"+str(AVA_LOSS)
+        queue.put(ipstr)
+        return
+    
+    ava,loss=dopingdetect(tmplst)
+    
+    
+    if ava==AVA_INF and loss==LOSS_INF:
+        ava,loss=dohpingdetect(tmplst)
+    
+    ipstr=ipstr+"/"+str(ava)+"/"+str(loss)
+    
+    
+    queue.put(ipstr)
+    return
+    
+    
+
+def getdetectvalue(regioncfg):
+    pool = multiprocessing.Pool(processes=local_config["concurrentnum"])
+    q = multiprocessing.Manager().Queue()
+    
+    iplst=regioncfg['iplist'].split(',')
+    
+    for ipstr in iplst:
+        pool.apply_async(dodetect,(ipstr,q,))
+    
+    pool.close()
+    pool.join()
+    
+
+    resultlist=[]
+
+    while not q.empty():
+        detectvalue=q.get()
+        resultlist.append(detectvalue)
+    
+    print(str(resultlist))
+
+    return resultlist
+    
+
+def regionreport(gameid,regionid,resultlist):
+    body = {}
+    
+    body['vpnid']=VPNID
+    body['gameid']=gameid
+    body['regionid']=regionid
+    detectdatastr=','.join(resultlist)
+    body['detectdata']=detectdatastr
+    
+    headers={'Content-Type': 'application/json'}
+
+    
+    
+    try:    
+        request=urllib2.Request(local_config['reporturl'],headers=headers,data=json.dumps(body))
+        response=urllib2.urlopen(request)
+        return
+        
+    except Exception,e:
+        logerr("regionreport excption:" + str(e))
 
 
 def detectregion(gameid,regionid):
     regioncfglst=getregioncfg(gameid,regionid)
     
-    if len(regioncfglst)>1:
+    cfglstlen=len(regioncfglst)
+    
+    if cfglstlen>1:
         logerr("game "+str(gameid)+",region "+str(regionid)+" has more than one config,just skip it")
+        return
+    
+    if cfglstlen==0:
+        logerr("game "+str(gameid)+",region "+str(regionid)+" has no config,just skip it")
         return
     
     regioncfg=regioncfglst[0]
     
+    resultlist=getdetectvalue(regioncfg)
     
+    regionreport(gameid,regionid,resultlist)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-            
-        
+      
     
 def detectgamelst():
     for gameitem in GAMELST:
@@ -242,8 +414,13 @@ def detectgamelst():
         regionidstr=gameitem['regionlist']
         regionidlst=regionidstr.split(',')
         
-        for regionid in regionlst:
+        if gameid != 105:
+            continue
+        
+        for regionid in regionidlst:
             detectregion(gameid,regionid)
+        
+        loginfo("report for game "+str(gameid) + ",region "+str(regionid))
             
         
 
@@ -320,13 +497,11 @@ if __name__ == '__main__':
     loginfo("vpnid=" + str(VPNID))
     
     while True:
-		if(p_need_exit):
-			logerror("detectagent exit ... ...")
-			time.sleep(1)
-			sys.exit(0)
-
-		getgamelst()
+        if(p_need_exit):
+        	logerror("detectagent exit ... ...")
+        	time.sleep(1)
+        	sys.exit(0)
+        
+        getgamelst()
         detectgamelst()    
-		    
-		
-		time.sleep(local_config['sleepinterval'])
+        time.sleep(local_config['sleepinterval'])

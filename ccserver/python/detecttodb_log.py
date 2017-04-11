@@ -2,8 +2,8 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-log_path = "/data/proclog/log/detectagent/"
-log_file_message = "/data/proclog/log/detectagent/detectagent.log"
+log_path = "/data/proclog/log/detecttodb/"
+log_file_message = "/data/proclog/log/detecttodb/detecttodb.log"
 
 
 
