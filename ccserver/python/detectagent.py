@@ -14,12 +14,12 @@ from detectagent_log import *
 VERSION='0.1.0'
 
 local_config = {                                                                      \
-                #"detecturl":"http://games.nubesi.com/vpn/detectgame",                   \
-                "detecturl":"http://127.0.0.1/vpn/detectgame",                   \
-		        "sleepinterval":30,                   \
+                "detecturl":"http://games.nubesi.com/vpn/detectgame",                   \
+                #"detecturl":"http://127.0.0.1/vpn/detectgame",                   \
+		        "sleepinterval":14400,                   \
 		        "concurrentnum":40,                    \
-		        #"reporturl":"http://223.202.197.12:8181/" \
-		        "reporturl":"http://127.0.0.1:8181/"      \
+		        "reporturl":"http://223.202.197.12:8181/" \
+		        #"reporturl":"http://127.0.0.1:8181/"      \
                 };
                 
 if (hasattr(os, "devnull")):
@@ -242,6 +242,7 @@ def dopingdetect(cfglst):
     
     cmd="ping -c 5 -W 2 " + cfglst[0]
     print(cmd)
+    logdebug(cmd)
     
         
     try:
@@ -249,6 +250,7 @@ def dopingdetect(cfglst):
         cstdout = sub_p.stdout
         cstderr = sub_p.stderr
     except Exception,e:
+        logerr("execute ping cmd exception:" + str(e))
         print("execute ping cmd exception:" + str(e))
         return ava,loss
 	
@@ -273,6 +275,7 @@ def dopingdetect(cfglst):
         return ava,loss
 
     except Exception,e:
+        logerr("read ping cmd out exception:" + str(e))
 		print("read ping cmd out exception:" + str(e))
 		return ava,loss
 
@@ -283,12 +286,14 @@ def dohpingdetect(cfglst):
     
     cmd="hping -c 5 -S -p " + cfglst[1] +" " + cfglst[0]
     print(cmd)
+    logdebug(cmd)
         
     try:
         sub_p = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         cstdout = sub_p.stdout
         cstderr = sub_p.stderr
     except Exception,e:
+        logerr("execute hping cmd exception:" + str(e))
         print("execute hping cmd exception:" + str(e))
         return ava,loss
 	
@@ -315,6 +320,7 @@ def dohpingdetect(cfglst):
         return ava,loss
 
     except Exception,e:
+        logerr("read hping cmd out exception:" + str(e))
 		print("read hping cmd out exception:" + str(e))
 		return ava,loss
 
@@ -322,6 +328,7 @@ def dohpingdetect(cfglst):
 def dodetect(ipstr,queue):
     tmplst=ipstr.split('/')
     if len(tmplst)!=3:
+        logerr("invalid ipstr:" + ipstr)
         print("invalid ipstr:" + ipstr)
         ipstr=ipstr+"/"+str(AVA_INF)+"/"+str(AVA_LOSS)
         queue.put(ipstr)
@@ -360,7 +367,8 @@ def getdetectvalue(regioncfg):
         detectvalue=q.get()
         resultlist.append(detectvalue)
     
-    print(str(resultlist))
+    loginfo(str(resultlist))
+    
 
     return resultlist
     
@@ -413,9 +421,6 @@ def detectgamelst():
         gameid=gameitem['gameid']
         regionidstr=gameitem['regionlist']
         regionidlst=regionidstr.split(',')
-        
-        if gameid != 105:
-            continue
         
         for regionid in regionidlst:
             detectregion(gameid,regionid)
@@ -476,12 +481,9 @@ if __name__ == '__main__':
         if ( name == "-q" ):
             QUIET = 1
    
-    #python_daemon()
+    python_daemon()
     
     ethip=get_eth_ip()
-    
-    ethip=["223.202.197.11"]
-
     
     if len(ethip)==0:
         logerr("can't determine eth0 ip,exit...")

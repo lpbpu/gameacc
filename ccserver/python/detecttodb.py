@@ -164,13 +164,14 @@ def server_thread_func():
     tid.start();
 
 
-def deal_report(cur,report):
+def deal_report(conn,cur,report):
     vpnid=report["vpnid"]
     gameid=report["gameid"]
     regionid=report["regionid"]
     detectstr=report["detectdata"]
     
     try:
+        loginfo("deal request for vpn " + str(vpnid) + ",game " + str(gameid) + ",region " + str(regionid))
         sql="select activeid from vpn_" + str(vpnid) + "_regiondetect_active_tbl where gameid=" + str(gameid) + " and gameregionid=" + str(regionid)
         print(sql)
         cur.execute(sql)
@@ -197,18 +198,20 @@ def deal_report(cur,report):
         
         sql="delete from " + active_tbl + " where gameid=" + str(gameid) + " and gameregionid=" + str(regionid)
         print(sql)
-        #cur.execute(sql)
+        cur.execute(sql)
         
         for detectdata in detectlst:
             datalst=detectdata.split('/')
             #ip/port/mask/rtt/loss
             sql="insert into " + active_tbl + " (gameid,gameregionid,gameip,gameport,gamemask,pingvalue,loss) values (" + str(gameid) + "," +str(regionid) +",'"+str(datalst[0])+"',"+str(datalst[1])+","+str(datalst[2])+","+str(datalst[3])+","+str(datalst[4])+")"
             print(sql)
-            #cur.execute(sql)
+            cur.execute(sql)
         # update activeid
-        sql="update vpn_" + str(vpnid) + "_regiondetect_active_tbl set activeid=" + str(vpnid) + " where gameid=" + str(gameid) + " and gameregionid=" + str(regionid)
+        sql="update vpn_" + str(vpnid) + "_regiondetect_active_tbl set activeid=" + str(activeid) + " where gameid=" + str(gameid) + " and gameregionid=" + str(regionid)
         print(sql)
-        #cur.execute(sql)
+        cur.execute(sql)
+        
+        conn.commit()
     
     except Exception,e:
         print("except in in deal_report:"+str(e))
@@ -239,7 +242,7 @@ if __name__ == '__main__':
             QUIET = 1
     
     
-    #python_daemon()
+    python_daemon()
     
     
     try:
@@ -266,7 +269,7 @@ if __name__ == '__main__':
         
         while not reports.empty():
             report=dict(reports.get())
-            deal_report(cur,report)
+            deal_report(conn,cur,report)
 
         time.sleep(5)
         
