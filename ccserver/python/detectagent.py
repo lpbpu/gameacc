@@ -276,8 +276,8 @@ def dopingdetect(cfglst):
 
     except Exception,e:
         logerr("read ping cmd out exception:" + str(e))
-		print("read ping cmd out exception:" + str(e))
-		return ava,loss
+        print("read ping cmd out exception:" + str(e))
+        return ava,loss
 
 def dohpingdetect(cfglst):
     # ip/port/mask
@@ -321,8 +321,8 @@ def dohpingdetect(cfglst):
 
     except Exception,e:
         logerr("read hping cmd out exception:" + str(e))
-		print("read hping cmd out exception:" + str(e))
-		return ava,loss
+        print("read hping cmd out exception:" + str(e))
+        return ava,loss
 
 
 def dodetect(ipstr,queue):
@@ -422,6 +422,9 @@ def detectgamelst():
         regionidstr=gameitem['regionlist']
         regionidlst=regionidstr.split(',')
         
+        #if gameid != 105:
+        #    continue
+        
         for regionid in regionidlst:
             detectregion(gameid,regionid)
         
@@ -481,9 +484,11 @@ if __name__ == '__main__':
         if ( name == "-q" ):
             QUIET = 1
    
-    python_daemon()
+    #python_daemon()
     
     ethip=get_eth_ip()
+    
+    #ethip=['223.202.197.11']
     
     if len(ethip)==0:
         logerr("can't determine eth0 ip,exit...")
