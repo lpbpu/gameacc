@@ -61,20 +61,23 @@ function _M.getvpnip(self,db)
 	local item
 
 	for k,v in pairs(self.qoslst) do
-		if tonumber(v['rtt'])<tonumber(rttmin) then
+		if tonumber(v['rtt'])<tonumber(rttmin)  and tonumber(v['lose'])==0 then
 			rttmin=v['rtt']	
 			id=k
 		end	
 	end
 
 	if id==0 then
-		cc_global:returnwithcode(self.MOD_ERR_GETVPNIP,nil)
+		serverip['serverip']=''
+	else
+		item=self.qoslst[id]
+		serverip['serverip']=item['ip']
 	end
 
-	item=self.qoslst[id]
+	--item=self.qoslst[id]
 
 
-    serverip['serverip']=item['ip']
+    --serverip['serverip']=item['ip']
     return serverip
 end
 
