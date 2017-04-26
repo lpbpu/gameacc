@@ -11,6 +11,7 @@ local _M = {
     MOD_ERR_DBDEINIT = MOD_ERR_BASE-3,
 	MOD_ERR_INVALID_PARAM = MOD_ERR_BASE-4,
 	MOD_ERR_GETVPNIP = MOD_ERR_BASE-5,
+	MOD_ERR_SAVEUSERRTT = MOD_ERR_BASE-6
 }
 
 local log = ngx.log
@@ -25,6 +26,30 @@ local mt = { __index = _M}
 
 function _M.new(self)
 	return setmetatable({}, mt)
+end
+
+
+function _M.saveuserrtt(self,db,userreq,serverip)
+	local cjson=require "cjson"
+    local infostr=cjson.encode(self.qoslst)
+
+	local nowstr=os.date("%Y-%m-%d %H:%M:%S")
+	
+
+
+	local sql="insert into game_user_rtt_tbl(clientip,username,rttinfo,vpnserver,updatetime) values "
+	
+	sql=sql .. "('" .. ngx.var.remote_addr .. "','" .. tostring(userreq['uid']) .. "','" .. infostr .. "','" .. serverip['serverip'] .. "','" .. nowstr .."')"
+	
+	log(ERR,sql)
+
+	local res,err,errcode,sqlstate = db:query(sql)
+	if not res then
+		cc_global:returnwithcode(self.MOD_ERR_SAVEUSERRTT,nil)
+	end
+
+
+
 end
 
 
@@ -74,8 +99,16 @@ end
 
 function _M.process(self,userreq)
 	self.qoslst=nil
+	
 	self.qoslst=self:checkparm(userreq)
+
+	local db = cc_global:init_conn()
+
     local serverip=self:getvpnip()
+	self:saveuserrtt(db,userreq,serverip)
+
+	cc_global:deinit_conn(db)
+
     cc_global:returnwithcode(0,serverip)
 
 end
