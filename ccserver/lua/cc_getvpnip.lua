@@ -102,12 +102,12 @@ function _M.process(self,userreq)
 	
 	self.qoslst=self:checkparm(userreq)
 
-	local db = cc_global:init_conn()
+	--local db = cc_global:init_conn()
 
     local serverip=self:getvpnip()
-	self:saveuserrtt(db,userreq,serverip)
+	--self:saveuserrtt(db,userreq,serverip)
 
-	cc_global:deinit_conn(db)
+	--cc_global:deinit_conn(db)
 
     cc_global:returnwithcode(0,serverip)
 
