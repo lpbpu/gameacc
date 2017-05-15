@@ -73,13 +73,13 @@ function _M.getvpnip(self,userreq)
 
 	if id==0 then
 		serverip['serverip']=''
-		self:saveuserrtt(userreq,serverip)
+		-- self:saveuserrtt(userreq,serverip)
 	else
 		item=self.qoslst[id]
 		serverip['serverip']=item['ip']
 		
 		if tonumber(item['rtt'])>50 then
-			self:saveuserrtt(userreq,serverip)
+			-- self:saveuserrtt(userreq,serverip)
 		end
 
 	end
