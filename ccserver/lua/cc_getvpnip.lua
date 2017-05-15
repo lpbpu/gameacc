@@ -29,11 +29,12 @@ function _M.new(self)
 end
 
 
-function _M.saveuserrtt(self,db,userreq,serverip)
+function _M.saveuserrtt(self,userreq,serverip)
 	local cjson=require "cjson"
     local infostr=cjson.encode(self.qoslst)
-
 	local nowstr=os.date("%Y-%m-%d %H:%M:%S")
+
+	local db = cc_global:init_conn()
 	
 
 
@@ -45,15 +46,18 @@ function _M.saveuserrtt(self,db,userreq,serverip)
 
 	local res,err,errcode,sqlstate = db:query(sql)
 	if not res then
+		cc_global:deinit_conn(db)
 		cc_global:returnwithcode(self.MOD_ERR_SAVEUSERRTT,nil)
 	end
+
+	cc_global:deinit_conn(db)
 
 
 
 end
 
 
-function _M.getvpnip(self,db)
+function _M.getvpnip(self,userreq)
     local serverip={}
 
 	local id=0
@@ -69,15 +73,17 @@ function _M.getvpnip(self,db)
 
 	if id==0 then
 		serverip['serverip']=''
+		self:saveuserrtt(userreq,serverip)
 	else
 		item=self.qoslst[id]
 		serverip['serverip']=item['ip']
+		
+		if tonumber(item['rtt'])>50 then
+			self:saveuserrtt(userreq,serverip)
+		end
+
 	end
 
-	--item=self.qoslst[id]
-
-
-    --serverip['serverip']=item['ip']
     return serverip
 end
 
@@ -105,12 +111,9 @@ function _M.process(self,userreq)
 	
 	self.qoslst=self:checkparm(userreq)
 
-	--local db = cc_global:init_conn()
 
-    local serverip=self:getvpnip()
-	--self:saveuserrtt(db,userreq,serverip)
+    local serverip=self:getvpnip(userreq)
 
-	--cc_global:deinit_conn(db)
 
     cc_global:returnwithcode(0,serverip)
 
