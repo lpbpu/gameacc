@@ -31,7 +31,7 @@ function _M.getvpnlist(self,db)
     local serverip={}
     local sql="select vpnip from vpn_server_tbl where enabled=1 order by id"
     
-    log(ERR,sql)
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     
@@ -44,7 +44,7 @@ function _M.getvpnlist(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"iplist:",v[1])
+        --log(ERR,"iplist:",v[1])
         -- vpnip(1)
         ipinfo[counter]=v[1]
         counter=counter+1

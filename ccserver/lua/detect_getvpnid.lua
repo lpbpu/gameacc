@@ -54,7 +54,7 @@ function _M.getvpnid(self,db)
     sql="select id from vpn_server_tbl where vpnip='" .. self.vpnip .. "' and enabled=1"
     
 
-    log(ERR,sql)
+    --log(ERR,sql)
     
     
     local res,err,errcode,sqlstate = db:query(sql)
@@ -65,7 +65,7 @@ function _M.getvpnid(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"vpnid:",v[1])
+        --log(ERR,"vpnid:",v[1])
 
     	-- id(1)
     	vpnid=v[1]

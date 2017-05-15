@@ -61,7 +61,7 @@ function _M.getdetectipportlist(self,db)
         sql="select gameregionid,gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid
     end
 
-    log(ERR,sql)
+    --log(ERR,sql)
     
     
     local res,err,errcode,sqlstate = db:query(sql)
@@ -72,7 +72,7 @@ function _M.getdetectipportlist(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"iplist:",v[1]," ",v[2]," ",v[3]," ",v[4])
+        --log(ERR,"iplist:",v[1]," ",v[2]," ",v[3]," ",v[4])
 
     	-- gameregionid(1),gameip(2),gamemask(3),gameport(4)
     	local regionitem={}

@@ -42,7 +42,7 @@ function _M.saveuserrtt(self,userreq,serverip)
 	
 	sql=sql .. "('" .. ngx.var.remote_addr .. "','" .. tostring(userreq['uid']) .. "','" .. infostr .. "','" .. serverip['serverip'] .. "','" .. nowstr .."')"
 	
-	log(ERR,sql)
+	--log(ERR,sql)
 
 	local res,err,errcode,sqlstate = db:query(sql)
 	if not res then

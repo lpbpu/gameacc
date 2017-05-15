@@ -40,7 +40,7 @@ function _M.checkparam(self,userreq)
     local req_param=userreq['data']
 
 
-	log(ERR,req_param['timestart'],req_param['timeend'],req_param['uid'])
+	--log(ERR,req_param['timestart'],req_param['timeend'],req_param['uid'])
 
 
     if req_param['timestart'] == nil or req_param['timeend'] == nil or req_param['uid'] == nil then
@@ -80,7 +80,7 @@ function _M.query_acct(self,db)
     end
     
     
-    log(ERR,sql)
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     
@@ -90,7 +90,7 @@ function _M.query_acct(self,db)
     
     -- starttime(1),gameid(2),gameregion(3)
     for k,v in pairs(res) do
-        log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3])
+        --log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3])
         local acct_item={}
         acct_item['acct_time']=v[1]
         acct_item['acct_gameid']=tonumber(v[2])

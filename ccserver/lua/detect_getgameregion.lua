@@ -36,7 +36,7 @@ function _M.getgameregion(self,db)
     sql="select gameid,regionid from game_region_tbl order by gameid"
     
 
-    log(ERR,sql)
+    --log(ERR,sql)
     
     
     local res,err,errcode,sqlstate = db:query(sql)
@@ -47,7 +47,7 @@ function _M.getgameregion(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"regionlist:",v[1]," ",v[2])
+        --log(ERR,"regionlist:",v[1]," ",v[2])
 
     	-- gameid(1),regionid(2)
     	local gameitem={}

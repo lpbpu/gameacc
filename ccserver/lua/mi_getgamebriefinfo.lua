@@ -46,7 +46,7 @@ function _M.get_all_region(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"game region:",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5]," ",v[6])
+        --log(ERR,"game region:",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5]," ",v[6])
         local gameitem={}
         local regionitem={}
         local regionlist,gameindex,regionindex
@@ -100,7 +100,7 @@ function _M.getbrieflist(self,db)
     
     
     for k,v in pairs(res) do
-        log(ERR,"brief ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4])
+        --log(ERR,"brief ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4])
         
         local gameitem={}
         local regionitem={}
@@ -147,7 +147,7 @@ function _M.getdetectlist(self,db)
     
     for k,v in pairs(res) do
     	
-        log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5])
+        --log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5])
         
         local gameitem={}
         local regionitem={}

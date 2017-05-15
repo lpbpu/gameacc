@@ -68,7 +68,7 @@ function _M.getgameiplist(self,db)
 
     sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid .. " and admin_enable=1"
     
-    log(ERR,sql)
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     
@@ -78,7 +78,7 @@ function _M.getgameiplist(self,db)
     
     -- game_list_percent(1)
     for k,v in pairs(res) do
-        log(ERR,"game_list_percent:",v[1])
+        --log(ERR,"game_list_percent:",v[1])
         percent=tonumber(v[1])
         break
     end
@@ -94,7 +94,7 @@ function _M.getgameiplist(self,db)
         sql="select distinct gameip,gamemask from game_server_tbl where gameid=" .. self.gameid
     end
 
-    log(ERR,sql)
+    --log(ERR,sql)
     
     
     local res,err,errcode,sqlstate = db:query(sql)
@@ -104,7 +104,7 @@ function _M.getgameiplist(self,db)
     end
     
     maxreturn=table.getn(res)*percent/100
-    log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
+    --log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
     
     counter=1
     
@@ -115,7 +115,7 @@ function _M.getgameiplist(self,db)
     local ipinfo={}
     
     for k,v in pairs(res) do
-        log(ERR,"iplist:",v[1]," ",v[2])
+        --log(ERR,"iplist:",v[1]," ",v[2])
     	
     	ipinfo[counter]=v[1].."/"..tostring(v[2])
     	
@@ -139,7 +139,7 @@ function _M.saveuserhistory(self,db)
 
     local sql = "insert into game_user_history_tbl(username,starttime,gameid,gameregionid) values ('" .. self.uid .."','".. nowstr.."',"..self.gameid..","..self.regionid..")"
     
-    log(ERR,sql)
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     
