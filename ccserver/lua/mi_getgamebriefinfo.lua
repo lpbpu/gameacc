@@ -20,6 +20,7 @@ local INFO = ngx.INFO
 
 
 
+
 local mt = { __index = _M}
 
 
@@ -32,7 +33,7 @@ end
 function _M.get_all_region(self,db)
     local tmpgamelist={}
 
-    local sql_game_all_region="select game_name_tbl.id,game_name_tbl.game_id,game_name_tbl.game_name,game_name_tbl.game_icon_url,game_region_tbl.id,game_region_tbl.regionname,game_region_tbl.ispname from game_name_tbl,game_region_tbl where game_name_tbl.game_id=game_region_tbl.gameid order by game_name_tbl.game_id"
+    local sql_game_all_region="select game_name_tbl.game_id,game_name_tbl.game_name,game_name_tbl.game_icon_url,game_region_tbl.regionid,game_region_tbl.regionname,game_region_tbl.ispname from game_name_tbl,game_region_tbl where game_name_tbl.game_id=game_region_tbl.gameid and game_name_tbl.admin_enable=1 order by game_name_tbl.game_id"
     
     local res,err,errcode,sqlstate = db:query(sql_game_all_region)
     
@@ -41,11 +42,11 @@ function _M.get_all_region(self,db)
     end
     
     
-    -- id(1),game_id(2),game_name(3),icon_url(4),id(5),regionname(6),ispname(7)
+    -- game_id(1),game_name(2),icon_url(3),regionid(4),regionname(5),ispname(6)
     
     
     for k,v in pairs(res) do
-        log(ERR,"game region:",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5]," ",v[6]," ",v[7])
+        --log(ERR,"game region:",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5]," ",v[6])
         local gameitem={}
         local regionitem={}
         local regionlist,gameindex,regionindex
@@ -55,9 +56,9 @@ function _M.get_all_region(self,db)
            
     
         if tmpgamelist[gameindex]== nil then      -- new game
-            gameitem['game_id']=v[2]
-            gameitem['game_name']=v[3]
-            gameitem['game_icon_url']=v[4]
+            gameitem['game_id']=v[1]
+            gameitem['game_name']=v[2]
+            gameitem['game_icon_url']=v[3]
             gameitem['regionlist']={}
         else
             gameitem=tmpgamelist[gameindex]
@@ -65,12 +66,12 @@ function _M.get_all_region(self,db)
         
         regionlist=gameitem['regionlist']
         
-        regionindex=tostring(v[5])
+        regionindex=tostring(v[4])
         
         
         regionitem['region_id']=regionindex
-        regionitem['region_name']=v[6]
-        regionitem['isp_name']=v[7]
+        regionitem['region_name']=v[5]
+        regionitem['isp_name']=v[6]
         regionitem['detect_ip_list']={}
         regionitem['brief_ip_list']={}
         
@@ -87,7 +88,7 @@ end
 
 -- require self.tmpgamelist
 function _M.getbrieflist(self,db)
-    local sql_brief_ip = "select game_name_tbl.id,game_region_tbl.id,game_server_brief_tbl.gameip,game_server_brief_tbl.gamemask from game_name_tbl,game_region_tbl,game_server_brief_tbl where game_name_tbl.game_id=game_region_tbl.gameid and game_region_tbl.id=game_server_brief_tbl.gameregionid"
+    local sql_brief_ip = "select game_server_brief_tbl.gameid,game_server_brief_tbl.gameregionid,game_server_brief_tbl.gameip,game_server_brief_tbl.gamemask from game_server_brief_tbl,game_name_tbl where game_name_tbl.game_id=game_server_brief_tbl.gameid and game_name_tbl.admin_enable=1 order by game_server_brief_tbl.gameid"
     
     local res,err,errcode,sqlstate = db:query(sql_brief_ip)
     
@@ -95,11 +96,11 @@ function _M.getbrieflist(self,db)
     	mi_global:returnwithcode(self.MOD_ERR_GETBRIEFLIST,nil)
     end
     
-    -- id(1),id(2),gameip(3),gamemask(4)
+    -- gameid(1),gameregionid(2),gameip(3),gamemask(4)
     
     
     for k,v in pairs(res) do
-        log(ERR,"brief ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4])
+        --log(ERR,"brief ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4])
         
         local gameitem={}
         local regionitem={}
@@ -134,7 +135,7 @@ end
 
 -- require self.tmpgamelist
 function _M.getdetectlist(self,db)
-    local sql_detect_ip = "select game_name_tbl.id,game_region_tbl.id,game_server_tbl.gameip,game_server_tbl.gamemask,game_server_tbl.gameport from game_name_tbl,game_region_tbl,game_server_tbl where game_server_tbl.gameregionid=game_region_tbl.id and game_region_tbl.gameid=game_name_tbl.game_id and game_server_tbl.gamedetect=1"
+    local sql_detect_ip = "select game_server_tbl.gameid,game_server_tbl.gameregionid,game_server_tbl.gameip,game_server_tbl.gamemask,game_server_tbl.gameport from game_server_tbl,game_name_tbl where game_name_tbl.game_id=game_server_tbl.gameid and game_name_tbl.admin_enable=1 and game_server_tbl.gamedetect=1 order by game_server_tbl.gameid"
     
     local res,err,errcode,sqlstate = db:query(sql_detect_ip)
     
@@ -142,11 +143,11 @@ function _M.getdetectlist(self,db)
     	mi_global:returnwithcode(self.MOD_ERR_GETDETECTLIST,nil)
     end
     
-    -- id(1),id(2),gameip(3),gamemask(4),gameport(5)
+    -- gameid(1),gameregionid(2),gameip(3),gamemask(4),gameport(5)
     
     for k,v in pairs(res) do
     	
-        log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5])
+        --log(ERR,"detect ip list: ",v[1]," ",v[2]," ",v[3]," ",v[4]," ",v[5])
         
         local gameitem={}
         local regionitem={}

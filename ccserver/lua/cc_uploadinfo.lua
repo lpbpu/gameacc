@@ -31,9 +31,12 @@ end
 function _M.uploadinfo(self,db,userreq)
     local cjson=require "cjson"
     local infostr=cjson.encode(userreq)
-    
-    local sql="insert into game_sdk_upload_tbl(content) values ('"..infostr.."')"
-    log(ERR,sql)
+
+	local nowstr=os.date("%Y-%m-%d %H:%M:%S")
+
+	local sql="insert into game_sdk_upload_tbl (clientip,uploadtime,content) values ('" .. ngx.var.remote_addr .."','" .. nowstr .. "','" .. infostr .. "')"
+
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     

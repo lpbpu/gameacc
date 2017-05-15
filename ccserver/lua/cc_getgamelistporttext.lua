@@ -2,7 +2,7 @@ require "os"
 
 local cc_global=require "cc_global"
 
-local MOD_ERR_BASE = cc_global.ERR_MOD_GETGAMELIST_BASE
+local MOD_ERR_BASE = cc_global.ERR_MOD_GETGAMELISTPORT_BASE
 
 local _M = { 
     _VERSION = '1.0.1',
@@ -28,7 +28,6 @@ local mt = { __index = _M}
 function _M.new(self)
 	return setmetatable({}, mt)
 end
-
 
 
 function _M.checkparm(self,userreq)
@@ -61,12 +60,10 @@ function _M.getgameiplist(self,db)
     local percent=0
     local counter
     local maxreturn=0
+
     
     
-    gameiplist['iplist']={}
-
-
-    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid .. " and admin_enable=1"
+    sql = "select game_list_percent from game_name_tbl where game_id=" .. self.gameid
     
     --log(ERR,sql)
     
@@ -84,14 +81,13 @@ function _M.getgameiplist(self,db)
     end
     
     if percent==0 then
-        return gameiplist
+        return ""
     end
     
-
     if self.regionid~= 0 then
-        sql="select distinct gameip,gamemask from game_server_tbl where gameid=" .. self.gameid .. " and gameregionid=" .. self.regionid
+        sql="select gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid .. " and gameregionid=" .. self.regionid
     else
-        sql="select distinct gameip,gamemask from game_server_tbl where gameid=" .. self.gameid
+        sql="select gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid
     end
 
     --log(ERR,sql)
@@ -107,17 +103,18 @@ function _M.getgameiplist(self,db)
     --log(ERR,"len(res)="..table.getn(res)..",maxreturn="..maxreturn)
     
     counter=1
-    
-    
-     -- gameip(1),gamemask(2)
+
+    -- gameip(1),gamemask(2),gameport(3)
+
     
     local ipstr=""
     local ipinfo={}
     
     for k,v in pairs(res) do
-        --log(ERR,"iplist:",v[1]," ",v[2])
+        --log(ERR,"iplist:",v[1]," ",v[2]," ",v[3])
+
     	
-    	ipinfo[counter]=v[1].."/"..tostring(v[2])
+    	ipinfo[counter]=v[1]..":"..tostring(v[3]).."/"..tostring(v[2])
     	
     	counter=counter+1
     	if counter>maxreturn then
@@ -127,9 +124,9 @@ function _M.getgameiplist(self,db)
     
     ipstr=table.concat(ipinfo,",")
     
-    gameiplist['iplist']=ipstr
+    
 
-    return gameiplist
+    return ipstr
 end
 
 function _M.saveuserhistory(self,db)
@@ -162,7 +159,11 @@ function _M.process(self,userreq)
     self:saveuserhistory(db)
     cc_global:deinit_conn(db)
     
-    cc_global:returnwithcode(0,gameiplist)
+    local retstr="\"" .. gameiplist .. "\""
+    ngx.say(retstr)
+    ngx.exit(200)
+    
+    --cc_global:returnwithcode(0,gameiplist)
 end
 
 return _M

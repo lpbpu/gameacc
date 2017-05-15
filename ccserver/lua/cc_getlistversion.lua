@@ -40,7 +40,7 @@ function _M.checkparam(self,userreq)
         cc_global:returnwithcode(self.MOD_ERR_INVALID_PARAM,nil)
     end
     
-    log(ERR,req_param['gameid'])
+    --log(ERR,req_param['gameid'])
     
     gameid=tonumber(req_param['gameid'])
     
@@ -62,7 +62,7 @@ function _M.getlistversion(self,db)
     local version
     
     sql = "select gameversion from game_server_version_tbl where gameid=" .. self.gameid
-    log(ERR,sql)
+    --log(ERR,sql)
     
     local res,err,errcode,sqlstate = db:query(sql)
     
@@ -72,7 +72,7 @@ function _M.getlistversion(self,db)
     
     -- gameversion(1)
     for k,v in pairs(res) do
-        log(ERR,"list version: ",v[1])
+        --log(ERR,"list version: ",v[1])
         version=v[1]
     end
     gamelistversion['version']=version
