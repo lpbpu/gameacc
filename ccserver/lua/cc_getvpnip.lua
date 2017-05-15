@@ -64,11 +64,20 @@ function _M.getvpnip(self,userreq)
 	local rttmin=99999
 	local item
 
+
 	for k,v in pairs(self.qoslst) do
-		if tonumber(v['rtt'])<tonumber(rttmin)  and tonumber(v['lose'])==0 then
-			rttmin=v['rtt']	
-			id=k
-		end	
+		while true do
+			if v['rtt']==nil or v['lose']==nil then
+				break
+			end
+
+			if tonumber(v['rtt'])<tonumber(rttmin)  and tonumber(v['lose'])==0 then
+				rttmin=v['rtt']	
+				id=k
+			end
+
+			break
+		end
 	end
 
 	if id==0 then
