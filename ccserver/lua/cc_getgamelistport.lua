@@ -85,9 +85,9 @@ function _M.getgameiplist(self,db)
     end
     
     if self.regionid~= 0 then
-        sql="select gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid .. " and gameregionid=" .. self.regionid
+        sql="select distinct gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid .. " and gameregionid=" .. self.regionid
     else
-        sql="select gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid
+        sql="select distinct gameip,gamemask,gameport from game_server_tbl where gameid=" .. self.gameid
     end
 
     --log(ERR,sql)
