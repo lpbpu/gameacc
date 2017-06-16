@@ -38,9 +38,13 @@ if "POST"==request_method then
             local detect_getgameregion = detect_getgameregion_obj:new()
             detect_getgameregion:process(userdata)
         elseif cmdid == 3 then
-            local detect_getvpnid_obj = require "detect_getvpnid"
-            local detect_getvpnid = detect_getvpnid_obj:new()
-            detect_getvpnid:process(userdata)
+            local detect_getvpnlst_obj = require "detect_getvpnlst"
+            local detect_getvpnlst = detect_getvpnlst_obj:new()
+            detect_getvpnlst:process(userdata)
+		elseif cmdid == 4 then
+			local detect_getcclst_obj = require "detect_getcclst"
+			local detect_getcclst = detect_getcclst_obj:new()
+			detect_getcclst:process(userdata)
         else
             detect_global:returnwithcode(detect_global.ERR_UNSUPPORT_CMD,nil)
         end
