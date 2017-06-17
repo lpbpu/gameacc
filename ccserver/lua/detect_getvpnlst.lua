@@ -33,7 +33,7 @@ function _M.getvpnlst(self,db)
 	local vpn_node_lst={}
     
     
-    sql="select id, nodename,multi_detect_ifacelst,multi_detect_iplst,nodestatus,enabled from vpn_node_tbl order by id"
+    sql="select nodeid,nodename,multi_detect_ifacelst,multi_detect_iplst,nodestatus,enabled from vpn_node_tbl order by nodeid"
     
 
     --log(ERR,sql)
@@ -47,7 +47,7 @@ function _M.getvpnlst(self,db)
     
     
     for k,v in pairs(res) do
-		-- id, nodename,multi_detect_ifacelst,multi_detect_iplst,nodestatus,enabled
+		-- nodeid, nodename,multi_detect_ifacelst,multi_detect_iplst,nodestatus,enabled
     	local vpn_node={}
 		vpn_node['vpnid']=v[1]
 		vpn_node['nodename']=v[2]
