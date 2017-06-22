@@ -9,7 +9,7 @@ local _M = {
     MOD_ERR_ALLOC = MOD_ERR_BASE-1,
     MOD_ERR_DBINIT = MOD_ERR_BASE-2,
     MOD_ERR_GETVPNLIST = MOD_ERR_BASE-3,
-    MOD_ERR_DBDEINIT = MOD_ERR_BASE-4
+    MOD_ERR_DBDEINIT = MOD_ERR_BASE-4,
 }
 
 local log = ngx.log
@@ -39,7 +39,7 @@ function _M.getvpnlist(self,db)
     	cc_global:returnwithcode(self.MOD_ERR_GETVPNLIST,nil)
     end
     
-    counter=1
+    local counter=1
     local ipinfo={}
     
     
@@ -57,10 +57,43 @@ function _M.getvpnlist(self,db)
     return serverip
 end
 
+
+function _M:getvpnlist_redis(red)
+	local serverip={}
+
+	local res,err = red:hkeys("vpn_active_ip_to_id")
+	if not res then
+		log(ERR,"getvpnlist_redis:"..tostring(err))
+		return nil
+	end
+
+	local ipinfo={}
+	local counter=1
+
+	for k,v in pairs(res) do
+		ipinfo[counter]=v
+		counter=counter+1
+	end
+	ipstr=table.concat(ipinfo,",")
+
+	serverip['iplist']=ipstr
+	return serverip
+		
+end
+
 function _M.process(self,userreq)
-    local db = cc_global:init_conn()
-    local serverip=self:getvpnlist(db)
-    cc_global:deinit_conn(db)
+	local red = cc_global:init_redis()
+	local serverip
+
+	serverip=self:getvpnlist_redis(red)
+	cc_global:deinit_redis(red)
+
+
+	if serverip==nil then
+    	local db = cc_global:init_conn()
+    	serverip=self:getvpnlist(db)
+    	cc_global:deinit_conn(db)
+	end
     cc_global:returnwithcode(0,serverip)
 
 end

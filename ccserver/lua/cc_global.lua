@@ -16,6 +16,12 @@ local _M = {
     ERR_DB_ALLOC = ERR_BASE_ERROR-10,
     ERR_DBINIT = ERR_BASE_ERROR-11,
     ERR_DBDEINIT = ERR_BASE_ERROR-12,
+
+
+	ERR_REDIS_ALLOC = ERR_BASE_ERROR-20,
+	ERR_REDIS_CONNECT = ERR_BASE_ERROR-21,
+	ERR_REDIS_AUTH = ERR_BASE_ERROR-22,
+	ERR_REDIS_KEEPALIVE=ERR_BASE_ERROR-23,
     
 
     ERR_MOD_GETGAMELIST_BASE = ERR_BASE_ERROR-100,
@@ -80,6 +86,44 @@ function _M.init_conn(self)
     end
     
     return db
+end
+
+function _M.init_redis(self)
+	local redis = require "resty.redis"
+	local red = redis:new()
+
+	if not red then
+		self:returnwithcode(self.ERR_REDIS_ALLOC,nil)
+	end
+
+	red:set_timeout(1000)	-- 1 sec
+	
+	local ok,err = red:connect("192.168.14.157",6379)
+	if not ok then
+		self:returnwithcode(self.ERR_REDIS_CONNECT,nil)
+	end	
+	
+	local res,err = red:auth("redis")
+	if not res then
+		self:returnwithcode(self.ERR_REDIS_AUTH,nil)
+	end
+
+
+	--local ok,err = red:set_keepalive(10000,100)
+	--if not ok then
+	--	ngx.log(ngx.ERR,tostring(err))
+	--	self:returnwithcode(self.ERR_REDIS_AUTH,nil)
+	--end
+
+
+	return red
+end
+
+function _M.deinit_redis(self,red)
+	local ok,err = red:set_keepalive(10000,100)
+	if not ok then
+		self:returnwithcode(self.ERR_REDIS_KEEPALIVE,nil)
+	end
 end
 
 
