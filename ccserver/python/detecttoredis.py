@@ -171,7 +171,7 @@ def deal_report(r,report):
     detectstr=report["detectdata"]
     
     try:
-        loginfo("deal request for vpn " + str(vpnid) + ",game " + str(gameid) + ",region " + str(regionid))
+		loginfo("deal request for vpn " + str(vpnid) + ",game " + str(gameid) + ",region " + str(regionid))
 		
 		# get active id
 		activeid_key="vpn_"+str(vpnid)+"_detect_activeid"
@@ -186,9 +186,9 @@ def deal_report(r,report):
 		
 		if activeid==-1:
 			activeid=0
-		else if activeid==0:
+		elif activeid==0:
 			activeid=1
-		else
+		else:
 			activeid=0
 
 		# set data
@@ -243,7 +243,7 @@ if __name__ == '__main__':
     
     try:
 	   	r = redis.StrictRedis(host='192.168.14.157', port=6379, db=0,password='redis',encoding='utf-8')
-        server_thread_func()
+		server_thread_func()
 	
     except Exception,e:
         print("exception in main:"+str(e))
