@@ -10,7 +10,7 @@ import Queue
 import time
 import redis
 
-from detecttodb_log import *
+from detecttoredis_log import *
 
 
 VERSION='0.1.0'
