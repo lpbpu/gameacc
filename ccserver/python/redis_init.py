@@ -59,6 +59,9 @@ def init_game_region(conn,cur,r):
 					field="game_"+str(gameid[0])+"_region_" + str(regionid[0]) + "_rtt"
 					r.hset(vpn_ava_rtt_key,field,0)		# set ava rtt region
 
+					field="game_" + str(gameid[0]) + "_region_" + str(regionid[0]) + "_rtt_cnt"
+					r.hset(vpn_ava_rtt_key,field,0)
+
 					field="game_"+str(gameid[0])+"_region_" + str(regionid[0]) + "_activeid"
 					r.hset(vpn_detect_active_id_key,field,-1)	# set active id
 		
@@ -89,7 +92,7 @@ if __name__ == '__main__':
 		conn=MySQLdb.connect(host='localhost', port=3306, user='root', passwd='root', db='game1',charset="utf8")
 		cur=conn.cursor()
         
-		r = redis.StrictRedis(host='192.168.14.157', port=6379, db=0,password='redis',encoding='utf-8')
+		r = redis.StrictRedis(host='127.0.0.1', port=6379, db=0,password='cc_chinacache',encoding='utf-8')
 		
 		deleteallkeys(r)
 		init_vpn_info(conn,cur,r)

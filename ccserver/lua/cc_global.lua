@@ -98,12 +98,12 @@ function _M.init_redis(self)
 
 	red:set_timeout(1000)	-- 1 sec
 	
-	local ok,err = red:connect("192.168.14.157",6379)
+	local ok,err = red:connect("127.0.0.1",6379)
 	if not ok then
 		self:returnwithcode(self.ERR_REDIS_CONNECT,nil)
 	end	
 	
-	local res,err = red:auth("redis")
+	local res,err = red:auth("cc_chinacache")
 	if not res then
 		self:returnwithcode(self.ERR_REDIS_AUTH,nil)
 	end

@@ -31,7 +31,7 @@ main_thread_info = {};
 
 reports = Queue.Queue()
 
-
+AVA_INF = 99999
 
 
 def loginfo(fmt,*arg):
@@ -165,24 +165,27 @@ def server_thread_func():
 
 
 def deal_report(r,report):
-    vpnid=report["vpnid"]
-    gameid=report["gameid"]
-    regionid=report["regionid"]
-    detectstr=report["detectdata"]
+    rpt_vpnid=report["vpnid"]
+    rpt_gameid=report["gameid"]
+    rpt_regionid=report["regionid"]
+    rpt_detectstr=report["detectdata"]
     
     try:
-		loginfo("deal request for vpn " + str(vpnid) + ",game " + str(gameid) + ",region " + str(regionid))
+		loginfo("deal request for vpn " + str(rpt_vpnid) + ",game " + str(rpt_gameid) + ",region " + str(rpt_regionid))
 		
 		# get active id
-		activeid_key="vpn_"+str(vpnid)+"_detect_activeid"
-		activeid_field="game_"+str(gameid)+"_region_"+str(regionid)+"_activeid"
+		activeid_key="vpn_"+str(rpt_vpnid)+"_detect_activeid"
+		activeid_field="game_"+str(rpt_gameid)+"_region_"+str(rpt_regionid)+"_activeid"
 
-		exist=r.hexist(activeid_key,activeid_field)
+		exist=r.hexists(activeid_key,activeid_field)
 		if exist==False:
-			print("vpnid,gameid or regionid may not correct,skip this record")
+			logerr("vpnid,gameid or regionid may not correct,skip this record")
 			return
 
 		activeid=r.hget(activeid_key,activeid_field)
+
+		loginfo("get activeid=" + str(activeid))
+		activeid=int(activeid)
 		
 		if activeid==-1:
 			activeid=0
@@ -191,20 +194,97 @@ def deal_report(r,report):
 		else:
 			activeid=0
 
+		loginfo("activeid="+str(activeid))
+
 		# set data
-		detectlst=detectstr.split(',')
+		detectlst=rpt_detectstr.split(',')
 		if len(detectlst)==0:
 			return
 
-		detect_data_key="vpn_"+str(vpnid)+"_game_"+str(gameid)+"_region_"+str(regionid)+"_detect_data_"+str(activeid)
+		detect_data_key="vpn_"+str(rpt_vpnid)+"_game_"+str(rpt_gameid)+"_region_"+str(rpt_regionid)+"_detect_data_"+str(activeid)
+		loginfo("detect_data_key="+detect_data_key)
+
 		r.delete(detect_data_key)
+
+		ava_report_counter=0
+		ava_report_total=0
 
 		for detectdata in detectlst:
 			datalst=detectdata.split('/')
 			#ip/port/mask/rtt/loss
 			detect_data_value=datalst[0]+":"+datalst[1]+"/"+datalst[2]
 			r.zadd(detect_data_key,datalst[3],detect_data_value)
+			
+			ava_value=int(datalst[3])
+			if ava_value != AVA_INF:
+				ava_report_total=ava_report_total+ava_value
+				ava_report_counter=ava_report_counter+1
 
+		if ava_report_counter!=0:
+			ava_report_average=ava_report_total/ava_report_counter
+		else:
+			ava_report_average=AVA_INF
+
+
+		loginfo("average report ava="+str(ava_report_average))
+
+
+		
+		# update ava rtt
+		## get game region
+		regionsetkey="game_"+str(rpt_gameid)+"_region"
+		regionlst=r.smembers(regionsetkey)
+
+		ava_region_key="vpn_"+str(rpt_vpnid)+"_ava_rtt"
+
+
+		ava_counter=0
+		ava_total=0
+
+
+		## get region ava rtt
+		for regionid in regionlst:
+			if regionid==rpt_regionid:
+				continue
+
+			ava_region_rtt_field="game_"+str(rpt_gameid)+"_region_"+str(regionid)+"_rtt"
+			exist1=r.hexists(ava_region_key,ava_region_rtt_field)
+			ava_region_rtt_cnt_field="game_"+str(gameid)+"_region_"+str(regionid)+"_rtt_cnt"
+			exist2=r.hexists(ava_region_key,ava_region_rtt_cnt_field)
+
+
+			if exist1==False or exist2==False:
+				logerr(ava_region_rtt_field + " or " + ava_region_rtt_cnt_field + " not exist")
+				continue
+
+			ava_rtt_value=r.hget(ava_region_key,ava_region_rtt_field)
+			ava_rtt_cnt=r.hget(ava_region_key,ava_region_rtt_cnt_field)
+
+			if ava_rtt_cnt>0:
+				ava_counter=ava_counter+ava_rtt_cnt
+				ava_total=ava_total+ava_rtt_value*ava_rtt_cnt
+
+
+		ava_counter=ava_counter+ava_report_counter
+		ava_total=ava_total+ava_report_total
+
+		if ava_counter!=0:
+			ava_average=ava_total/ava_counter
+		else:
+			ava_average=AVA_INF
+
+
+		# update region ava rtt
+		ava_region_rtt_field="game_"+str(rpt_gameid)+"_region_"+str(rpt_regionid)+"_rtt"
+		ava_region_rtt_cnt_field="game_"+str(rpt_gameid)+"_region_"+str(rpt_regionid)+"_rtt_cnt"
+		r.hset(ava_region_key,ava_region_rtt_field,ava_report_average)
+		r.hset(ava_region_key,ava_region_rtt_cnt_field,ava_report_counter)
+
+		# update region 0 ava rtt
+		ava_region_rtt_field="game_"+str(rpt_gameid)+"_region_0_rtt"
+		r.hset(ava_region_key,ava_region_rtt_field,ava_average)
+		
+		# set activeid
 		r.hset(activeid_key,activeid_field,activeid)
 		
 
@@ -242,7 +322,7 @@ if __name__ == '__main__':
     
     
     try:
-	   	r = redis.StrictRedis(host='192.168.14.157', port=6379, db=0,password='redis',encoding='utf-8')
+	   	r = redis.StrictRedis(host='127.0.0.1', port=6379, db=0,password='cc_chinacache',encoding='utf-8')
 		server_thread_func()
 	
     except Exception,e:
