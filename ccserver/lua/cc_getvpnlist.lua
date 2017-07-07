@@ -29,7 +29,7 @@ end
 
 function _M.getvpnlist(self,db)
     local serverip={}
-    local sql="select vpnip from vpn_server_tbl where enabled=1 order by id"
+    local sql="select vpn_node_ip_tbl.vpnip  from vpn_node_ip_tbl,vpn_node_tbl where vpn_node_ip_tbl.nodeid=vpn_node_tbl.nodeid and vpn_node_tbl.enabled=1"
     
     --log(ERR,sql)
     

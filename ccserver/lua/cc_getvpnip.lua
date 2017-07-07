@@ -98,10 +98,41 @@ function _M.getvpnip(self,userreq)
     return serverip
 end
 
+function _M.filteractivevpn(self,red)
+	local filtervpnlst={}
+	local vpnid
+	
+	for k,v in pairs(self.qoslst) do
+       while true do
+            local filteritem={}
+            if v['rtt']==nil or v['lose']==nil then
+                break
+            end
 
+            if red:hexists(v['ip'])==0 then
+                break
+            end
+
+            vpnid=red:hget("vpn_active_ip_to_id",v['ip'])
+
+            filteritem['rtt']=v['rtt']
+            filteritem['ip']=v['ip']
+            filteritem['vpnid']=vpnid
+            if v['lose']~= nil then
+                filteritem['loss']=v['lose']
+            end
+            filteritem['valid']=1
+            table.insert(filtervpnlst,filteritem)
+            break
+        end
+	end
+
+	return filtervpnlst
+
+end
 
 function _M.filterqosredis(self,red)
-	local filterqos={}	
+	local filterqos	
 	local vpnid
 
 
@@ -118,31 +149,7 @@ function _M.filterqosredis(self,red)
 	end
 
 
-	
-	for k,v in pairs(self.qoslst) do
-		while true do
-			local filteritem={}
-			if v['rtt']==nil then
-				break	
-			end
-
-			if red:hexists(v['ip'])==0 then
-				break	
-			end
-
-			vpnid=red:hget("vpn_active_ip_to_id",v['ip'])
-
-			filteritem['rtt']=v['rtt']
-			filteritem['ip']=v['ip']
-			filteritem['vpnid']=vpnid
-			if v['lose']~= nil then
-				filteritem['loss']=v['lose']
-			end
-			filteritem['valid']=1
-			table.insert(filterqos,filteritem)
-			break
-		end
-	end
+	filterqos=self:filteractivevpn(red)	
 
 	return filterqos
 	
@@ -177,6 +184,10 @@ function _M.updatesortqosredis(self,red,filterqos)
 				break
 			end
 
+			if v['loss']~=0 then
+				break
+			end
+
 			if minrtt==0 then
 				minrtt=v['rtt']
 				table.insert(filtervpnip,v['ip'])
@@ -208,31 +219,60 @@ end
 
 
 function _M.getvpnipredis(self,red,userreq)
-	-- 1. validate gameid,regionid,vpnip
-	local filterqos
-	local filtervpnip
-	local n
 
-	filterqos=self:filterqosredis(red)
-	self:dumptbl(filterqos)
+	if self.gameid~=nil and self.regionid~=nil then
+		-- new version
+		-- 1. validate gameid,regionid,vpnip
+		local filterqos
+		local filtervpnip
+		local n
+
+		filterqos=self:filterqosredis(red)
 	
-	-- 2. update game region ava rtt in filterqos
-	self:updateqosredis(red,filterqos)
+		-- 2. update game region ava rtt in filterqos
+		self:updateqosredis(red,filterqos)
 
 
-	-- 3. sort qos
-	table.sort(filterqos,function(a,b) return a['rtt']<b['rtt'] end)
+		-- 3. sort qos
+		table.sort(filterqos,function(a,b) return a['rtt']<b['rtt'] end)
+		self:dumptbl(filterqos)
 
-	-- 4. filter result	
-	filtervpnip=self:updatesortqosredis(red,filterqos)
-	self:dumptbl(filtervpnip)
+		-- 4. filter result	
+		filtervpnip=self:updatesortqosredis(red,filterqos)
+		self:dumptbl(filtervpnip)
 
-	n=table.getn(filtervpnip)
-	if n==0 then
-		return nil
+		n=table.getn(filtervpnip)
+		if n==0 then
+			return nil
+		end
+
+		return self:getrandomvpnip(filtervpnip)
+	else
+		-- old version
+		-- 1. validate vpnip
+		local filterqos
+		local filtervpnip
+		local n
+		
+		filterqos=self:filteractivevpn(red)
+
+		--2. sort qos
+		table.sort(filterqos,function(a,b) return a['rtt']<b['rtt'] end)
+		self:dumptbl(filterqos)
+
+		--3. filter result
+		filtervpnip=self:updatesortqosredis(red,filterqos)
+		self:dumptbl(filtervpnip)
+
+		n=table.getn(filtervpnip)
+        if n==0 then
+            return nil
+        end
+
+        return self:getrandomvpnip(filtervpnip)
+
+
 	end
-
-	return self:getrandomvpnip(filtervpnip)
 end
 
 function _M.dumptbl(self,filtertbl)
@@ -276,17 +316,15 @@ function _M.process(self,userreq)
 
 	local serverip
 
-	if self.gameid~=nil and self.regionid~=nil then
-		local red = cc_global:init_redis()
-		serverip=self:getvpnipredis(red,userreq)
-		cc_global:deinit_redis(red)
+	local red = cc_global:init_redis()
+	serverip=self:getvpnipredis(red,userreq)
+	cc_global:deinit_redis(red)
 
-		if serverip~=nil then
-			cc_global:returnwithcode(0,serverip)
-		end
+
+	if serverip==nil then
+		serverip=self:getvpnip(userreq)
 	end
 
-    serverip=self:getvpnip(userreq)
     cc_global:returnwithcode(0,serverip)
 
 end
